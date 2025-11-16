@@ -1,0 +1,6 @@
+@EnterpriseGradeInventoryAPI_HostAddress = http://localhost:5064
+
+GET {{EnterpriseGradeInventoryAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

@@ -1,0 +1,27 @@
+# Build outputs
+bin/
+obj/
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Visual Studio
+.vs/
+.vscode/
+
+# Rider
+.idea/
+.env
+
+# Dotnet specific
+*.dbmdl
+*.pdb
+*.dll
+*.exe
+*.log
+
+# ASP.NET Core secrets
+appsettings.*.json
