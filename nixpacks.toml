@@ -1,0 +1,5 @@
+[phases.build]
+cmds = ["dotnet publish ./EnterpriseGradeInventoryAPI.csproj --no-restore -c Release -o out"]
+
+[phases.start]
+cmd = "dotnet out/EnterpriseGradeInventoryAPI.dll"
