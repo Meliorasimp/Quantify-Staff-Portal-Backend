@@ -26,3 +26,6 @@ obj/
 # ASP.NET Core secrets
 appsettings.Development.json
 .env
+
+# Ignore SQL Server migrations (local development only)
+Migrations/*SqlServer*
