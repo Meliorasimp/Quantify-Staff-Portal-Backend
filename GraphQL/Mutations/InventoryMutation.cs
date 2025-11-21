@@ -57,7 +57,7 @@ namespace EnterpriseGradeInventoryAPI.GraphQL.Mutations
             CostPerUnit = item.CostPerUnit,
             TotalValue = item.QuantityInStock * item.CostPerUnit,
             UserId = userIdInt,
-            LastRestocked = DateTime.UtcNow // Use UTC for consistency
+            LastRestocked = DateTime.UtcNow
           };
 
           // Handle storage location association with validation
@@ -121,12 +121,93 @@ namespace EnterpriseGradeInventoryAPI.GraphQL.Mutations
         throw new GraphQLException("Inventory item not found or access denied");
       }
       
+      // Update storage location occupied capacity if item is linked to a storage location
+      if(item.StorageLocationId.HasValue)
+      {
+        var storageLocation = await context.StorageLocations.FindAsync(item.StorageLocationId.Value);
+        if(storageLocation != null)
+        {
+          storageLocation.OccupiedCapacity -= item.QuantityInStock;
+          // Ensure occupied capacity doesn't go below 0
+          if(storageLocation.OccupiedCapacity < 0)
+          {
+            storageLocation.OccupiedCapacity = 0;
+          }
+        }
+      }
+      
       context.Inventories.Remove(item);
       await context.SaveChangesAsync();
       return new DeletedInventoryPayload
       {
         Id = item.Id,
         ItemSKU = item.ItemSKU
+      };
+    }
+
+    public async Task<UpdatedInventoryPayload> UpdateInventory([Service] ApplicationDbContext context, ClaimsPrincipal user, int inventoryId, string itemSKU, string category, string productName, int quantityInStock, int reorderLevel)
+    {
+      if(!int.TryParse(user.FindFirst(ClaimTypes.NameIdentifier)?.Value, out int userIdInt))
+      {
+        throw new GraphQLException("Invalid user ID format");
+      }
+
+      var item = await context.Inventories.FindAsync(inventoryId);
+      if(item == null || item.UserId != userIdInt)
+      {
+        throw new GraphQLException("Inventory item not found or access denied");
+      }
+
+      // Store old quantity for storage location capacity update
+      int oldQuantity = item.QuantityInStock;
+
+      // Update fields
+      item.ItemSKU = itemSKU;
+      item.Category = category;
+      item.ProductName = productName;
+      item.QuantityInStock = quantityInStock;
+      item.ReorderLevel = reorderLevel;
+      item.TotalValue = item.QuantityInStock * item.CostPerUnit;
+
+      // Update storage location occupied capacity if quantity changed
+      if(item.StorageLocationId.HasValue && oldQuantity != quantityInStock)
+      {
+        var storageLocation = await context.StorageLocations.FindAsync(item.StorageLocationId.Value);
+        if(storageLocation != null)
+        {
+          // Calculate the difference in quantity
+          int quantityDifference = quantityInStock - oldQuantity;
+          
+          // Check if adding more items would exceed capacity
+          if(quantityDifference > 0)
+          {
+            if(storageLocation.OccupiedCapacity + quantityDifference > storageLocation.MaxCapacity)
+            {
+              throw new GraphQLException($"Updating to {quantityInStock} items would exceed storage capacity. Available space: {storageLocation.MaxCapacity - storageLocation.OccupiedCapacity}");
+            }
+          }
+          
+          // Update occupied capacity
+          storageLocation.OccupiedCapacity += quantityDifference;
+          
+          // Ensure occupied capacity doesn't go below 0
+          if(storageLocation.OccupiedCapacity < 0)
+          {
+            storageLocation.OccupiedCapacity = 0;
+          }
+        }
+      }
+
+      await context.SaveChangesAsync();
+
+      return new UpdatedInventoryPayload
+      {
+        Id = item.Id,
+        ItemSKU = item.ItemSKU,
+        ProductName = item.ProductName,
+        QuantityInStock = item.QuantityInStock,
+        ReorderLevel = item.ReorderLevel,
+        Category = item.Category
       };
     }
   }

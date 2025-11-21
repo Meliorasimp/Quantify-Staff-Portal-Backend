@@ -13,4 +13,14 @@ namespace EnterpriseGradeInventoryAPI.DTO.Output
     public int Id { get; set; }
     public string ItemSKU { get; set; } = string.Empty;
   }
+
+  public class UpdatedInventoryPayload
+  {
+    public int Id { get; set; }
+    public string ItemSKU { get; set; } = string.Empty;
+    public string ProductName { get; set; } = string.Empty;
+    public int QuantityInStock { get; set; }
+    public int ReorderLevel { get; set; }
+    public string Category { get; set; } = string.Empty;
+  }
 }
