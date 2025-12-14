@@ -1,7 +1,15 @@
 # For PostgreSQL (Production)
 
+# 1. Create migration
+
 $env:ASPNETCORE_ENVIRONMENT='Production'
-dotnet ef migrations add AddNewFeature
+dotnet ef migrations add PostgreSQL_NewFeature
+
+# 2. Deploy
+
+git add .
+git commit -m "Add new feature migration"
+git push
 
 # For SQL Server (Local) - with naming convention
 
