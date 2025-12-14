@@ -5,6 +5,7 @@ using HotChocolate;
 
 namespace EnterpriseGradeInventoryAPI.GraphQL.Mutations
 {
+  [ExtendObjectType(typeof(Mutation))]
   public class UserMutation
   {
     // Register a new user 

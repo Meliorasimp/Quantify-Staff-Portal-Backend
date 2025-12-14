@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using System.Text;
 using Npgsql.EntityFrameworkCore.PostgreSQL;
 using EnterpriseGradeInventoryAPI.GraphQL.Mutations;
+using EnterpriseGradeInventoryAPI.GraphQL.Queries;
 using EnterpriseGradeInventoryAPI.Models;
 using EnterpriseGradeInventoryAPI;
 using OfficeOpenXml;
@@ -95,10 +96,17 @@ builder.Services.AddAuthorization();
 builder.Services
     .AddGraphQLServer()
     .AddQueryType<EnterpriseGradeInventoryAPI.GraphQL.Query>()
-    .AddTypeExtension<EnterpriseGradeInventoryAPI.GraphQL.Queries.InventoryQuery>()
-    .AddTypeExtension<EnterpriseGradeInventoryAPI.GraphQL.Queries.WarehouseQuery>()
-    .AddTypeExtension<EnterpriseGradeInventoryAPI.GraphQL.Queries.StorageLocationQuery>()
+    .AddTypeExtension<WarehouseQuery>()
+    .AddTypeExtension<StorageLocationQuery>()
+    .AddTypeExtension<PurchaseOrderQuery>()
     .AddMutationType<EnterpriseGradeInventoryAPI.GraphQL.Mutation>()
+    .AddTypeExtension<AuditLogMutation>()
+    .AddTypeExtension<LoginMutation>()
+    .AddTypeExtension<InventoryMutation>()
+    .AddTypeExtension<WarehouseMutation>()
+    .AddTypeExtension<StorageLocationMutation>()
+    .AddTypeExtension<PurchaseOrderMutation>()
+    .AddTypeExtension<UserMutation>()
     .AddAuthorization();
     
 var app = builder.Build();

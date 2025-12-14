@@ -11,6 +11,7 @@ using System.Text;
 
 namespace EnterpriseGradeInventoryAPI.GraphQL.Mutations
 {
+  [ExtendObjectType(typeof(Mutation))]
   public class LoginMutation
   {
     public async Task<LoginPayload> loginUser([Service] ApplicationDbContext context, string loginemail, string loginpassword)

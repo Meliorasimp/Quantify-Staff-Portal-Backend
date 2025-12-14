@@ -11,6 +11,7 @@ using EnterpriseGradeInventoryAPI.DTO.Output;
 
 namespace EnterpriseGradeInventoryAPI.GraphQL.Mutations
 {
+  [ExtendObjectType(typeof(Mutation))]
   public class WarehouseMutation
   {
     

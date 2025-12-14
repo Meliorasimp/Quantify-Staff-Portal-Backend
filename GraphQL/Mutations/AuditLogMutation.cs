@@ -1,8 +1,11 @@
 using EnterpriseGradeInventoryAPI.Models;
 using EnterpriseGradeInventoryAPI;
+using EnterpriseGradeInventoryAPI.GraphQL;
 
+[ExtendObjectType(typeof(Mutation))]
 public class AuditLogMutation
 {
+  
   public async Task<AuditLog> CreateAuditLogMutation(
     [Service] AuditLogService auditLogService,
     string action,

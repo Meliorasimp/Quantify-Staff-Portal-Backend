@@ -9,6 +9,7 @@ using EnterpriseGradeInventoryAPI.DTO.Output;
 
 namespace EnterpriseGradeInventoryAPI.GraphQL.Mutations
 {
+  [ExtendObjectType(typeof(Mutation))]
   [Authorize] 
   public class InventoryMutation
   {

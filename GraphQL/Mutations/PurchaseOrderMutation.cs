@@ -6,7 +6,9 @@ using EnterpriseGradeInventoryAPI.DTO.Output;
 using System.Security.Claims;
 using System.Linq.Expressions;
 using EnterpriseGradeInventoryAPI;
+using EnterpriseGradeInventoryAPI.GraphQL;
 
+[ExtendObjectType(typeof(Mutation))]
 public class PurchaseOrderMutation
 {
   public async Task<PurchaseOrderPayload> AddPurchaseOrder(
@@ -14,6 +16,7 @@ public class PurchaseOrderMutation
     [Service] AuditLogService auditLogService,
     ClaimsPrincipal user,
     int id,
+    string supplierName,
     string deliveryWarehouse,
     string expectedDeliveryDate,
     List<PurchaseOrderItemInput> items,
@@ -34,6 +37,7 @@ public class PurchaseOrderMutation
 
       var purchaseOrder = new PurchaseOrder
       {
+        SupplierName = supplierName,
         DeliveryWarehouse = deliveryWarehouse,
         ExpectedDeliveryDate = DateTime.Parse(expectedDeliveryDate),
         PurchaseOrderNumber = id,
