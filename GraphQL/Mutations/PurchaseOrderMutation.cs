@@ -66,7 +66,11 @@ public class PurchaseOrderMutation
     }
     catch(Exception ex)
     {
-      throw new GraphQLException(new Error($"Error creating purchase order: {ex.Message}", "PURCHASE_ORDER_CREATION_FAILED"));
+      var innerMessage = ex.InnerException?.Message ?? "No inner exception";
+      Console.WriteLine($"Purchase order creation failed: {ex.Message}");
+      Console.WriteLine($"Inner exception: {innerMessage}");
+      Console.WriteLine($"Stack trace: {ex.StackTrace}");
+      throw new GraphQLException(new Error($"Error creating purchase order: {ex.Message} | Inner: {innerMessage}", "PURCHASE_ORDER_CREATION_FAILED"));
     }
   }
 }
