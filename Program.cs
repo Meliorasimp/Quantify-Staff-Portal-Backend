@@ -131,7 +131,7 @@ if (!app.Environment.IsDevelopment())
             {
                 Console.WriteLine("Database connected successfully.");
                 
-                // TEMPORARY: Drop all tables to reset database
+                // TEMPORARY: Drop all tables and recreate fresh
                 Console.WriteLine("Dropping all tables...");
                 db.Database.ExecuteSqlRaw(@"
                     DROP TABLE IF EXISTS ""AuditLogs"" CASCADE;
@@ -145,10 +145,10 @@ if (!app.Environment.IsDevelopment())
                 ");
                 Console.WriteLine("All tables dropped.");
                 
-                // Always try to migrate - EF Core will handle if already applied
-                Console.WriteLine("Running migrations...");
-                db.Database.Migrate();
-                Console.WriteLine("Migrations completed successfully.");
+                // Create fresh schema
+                Console.WriteLine("Creating fresh database schema...");
+                db.Database.EnsureCreated();
+                Console.WriteLine("Database schema created successfully.");
             }
             else
             {
