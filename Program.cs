@@ -131,17 +131,7 @@ if (!app.Environment.IsDevelopment())
             {
                 Console.WriteLine("Database connected successfully.");
                 
-                // TEMPORARY: One more reset to fix incomplete schema
-                Console.WriteLine("Resetting database for proper migration...");
-                db.Database.ExecuteSqlRaw(@"
-                    DROP SCHEMA public CASCADE;
-                    CREATE SCHEMA public;
-                    GRANT ALL ON SCHEMA public TO postgres;
-                    GRANT ALL ON SCHEMA public TO public;
-                ");
-                Console.WriteLine("Database reset complete.");
-                
-                // Now apply migration properly
+                // Always try to migrate - EF Core will handle if already applied
                 Console.WriteLine("Running migrations...");
                 db.Database.Migrate();
                 Console.WriteLine("Migrations completed successfully.");
