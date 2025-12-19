@@ -45,6 +45,8 @@ namespace EnterpriseGradeInventoryAPI.GraphQL.Mutations
           //Stores user information in the token
           new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
           new Claim(ClaimTypes.Email, user.Email),
+          new Claim(ClaimTypes.Surname, user.LastName),
+          new Claim(ClaimTypes.GivenName, user.FirstName),
         };
 
         //Creates a secret key that will be used to digitally sign the token

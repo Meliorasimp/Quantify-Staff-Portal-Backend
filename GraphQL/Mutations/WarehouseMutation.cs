@@ -18,18 +18,20 @@ namespace EnterpriseGradeInventoryAPI.GraphQL.Mutations
     public async Task<WarehousePayload> addWarehouse(
         [Service] ApplicationDbContext context, 
         List<AddWarehouseInput> input,
-        [Service] IHttpContextAccessor httpContextAccessor)
+        ClaimsPrincipal user
+        )
     {
       try
       {
-        // Get the current user information from JWT token
-        var user = await GetCurrentUserFromToken(httpContextAccessor, context);
-        
         if (user == null)
-        {
           throw new GraphQLException(new Error("User must be authenticated", "UNAUTHORIZED"));
-        }
 
+        var userIdString = user.FindFirst(ClaimTypes.NameIdentifier)?.Value 
+          ?? throw new GraphQLException(new Error("User ID not found in token", "INVALID_TOKEN"));
+
+        if(!int.TryParse(userIdString, out int userId))
+          throw new GraphQLException(new Error("Invalid user ID format", "INVALID_USER_ID"));
+        
         foreach (var item in input)
         {
           var newWarehouse = new Warehouse
@@ -42,8 +44,8 @@ namespace EnterpriseGradeInventoryAPI.GraphQL.Mutations
             Region = item.Region,
             Status = item.Status,
             CreatedAt = DateTime.UtcNow,
-            CreatedByUserId = user.Id,
-            CreatedByLastName = user.LastName,
+            CreatedByUserId = userId,
+            CreatedByLastName = user.FindFirst(ClaimTypes.Surname)?.Value ?? "Unknown",
           };
           context.Warehouses.Add(newWarehouse);
           await context.SaveChangesAsync();
@@ -63,66 +65,53 @@ namespace EnterpriseGradeInventoryAPI.GraphQL.Mutations
       }
     }
 
-    // Helper method to get current user from JWT token
-    private async Task<User?> GetCurrentUserFromToken(IHttpContextAccessor httpContextAccessor, ApplicationDbContext context)
+    public async Task<SelectedWarehousePayload> UpdateWarehouse(
+      [Service] ApplicationDbContext context, 
+      [Service] AuditLogService auditService,
+      ClaimsPrincipal user,
+      int id,
+      string? warehouseName,
+      string? warehouseCode,
+      string? location,
+      string? manager,
+      string? contactEmail,
+      string? region,
+      string? status
+      )
     {
-      var httpContext = httpContextAccessor.HttpContext;
-      if (httpContext == null) 
-      {
-        return null;
-      }
+      if (user == null)
+        throw new GraphQLException(new Error("User must be authenticated", "UNAUTHORIZED"));
 
-      // Get Authorization header
-      var authHeader = httpContext.Request.Headers["Authorization"].FirstOrDefault();
+      int userId = int.Parse(user.FindFirst(ClaimTypes.NameIdentifier)?.Value 
+        ?? throw new GraphQLException(new Error("User ID not found in token", "INVALID_TOKEN")));
+
+      var warehouse = await context.Warehouses.FindAsync(id);
       
-      if (string.IsNullOrEmpty(authHeader) || !authHeader.StartsWith("Bearer "))
-      {
-        return null;
-      }
+      if (warehouse == null)
+        throw new GraphQLException(new Error("Warehouse not found", "WAREHOUSE_NOT_FOUND"));
 
-      // Extract token
-      var token = authHeader.Substring("Bearer ".Length).Trim();
-      Console.WriteLine($"DEBUG: Extracted token: {token.Substring(0, Math.Min(20, token.Length))}...");
+      warehouse.WarehouseName = warehouseName ?? warehouse.WarehouseName;
+      warehouse.WarehouseCode = warehouseCode ?? warehouse.WarehouseCode;
+      warehouse.Address = location ?? warehouse.Address;
+      warehouse.Manager = manager ?? warehouse.Manager;
+      warehouse.ContactEmail = contactEmail ?? warehouse.ContactEmail;
+      warehouse.Region = region ?? warehouse.Region;
+      warehouse.Status = status ?? warehouse.Status;
+
+      await auditService.CreateAuditLog("Update", userId, "Warehouse", id, null, null, null);
+      await context.SaveChangesAsync();
       
-      try
+      return new SelectedWarehousePayload
       {
-        var tokenHandler = new JwtSecurityTokenHandler();
-        var jwtKey = Environment.GetEnvironmentVariable("JWT_KEY") ?? "SuperSecretKeyForDev12345";
-        var key = Encoding.UTF8.GetBytes(jwtKey);
-
-        // Validate token
-        var validationParameters = new TokenValidationParameters
-        {
-          ValidateIssuerSigningKey = true,
-          IssuerSigningKey = new SymmetricSecurityKey(key),
-          ValidateIssuer = false,
-          ValidateAudience = false,
-          ClockSkew = TimeSpan.Zero
-        };
-
-        var principal = tokenHandler.ValidateToken(token, validationParameters, out var validatedToken);
-        Console.WriteLine("DEBUG: Token validation successful");
-        
-        // Get user ID from claims
-        var userIdClaim = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        Console.WriteLine($"DEBUG: User ID claim: {userIdClaim}");
-        
-        if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out var userId))
-        {
-          Console.WriteLine("DEBUG: Invalid or missing user ID claim");
-          return null;
-        }
-
-        // Get user from database
-        var user = await context.Users.FindAsync(userId);
-        Console.WriteLine($"DEBUG: Found user: {user?.Email}");
-        return user;
-      }
-      catch (Exception ex)
-      {
-        Console.WriteLine($"DEBUG: Token validation failed: {ex.Message}");
-        return null;
-      }
+        WarehouseId = warehouse.Id,
+        WarehouseName = warehouse.WarehouseName,
+        WarehouseCode = warehouse.WarehouseCode,
+        Address = warehouse.Address,
+        Manager = warehouse.Manager,
+        ContactEmail = warehouse.ContactEmail,
+        Region = warehouse.Region,
+        Status = warehouse.Status
+      };
     }
   }
 }

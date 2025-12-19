@@ -31,4 +31,10 @@ namespace EnterpriseGradeInventoryAPI.DTO.Output
     public string User { get; set; } = string.Empty;
     public DateTimeOffset Timestamp { get; set; }
   }
+
+  public class DeletedWarehousePayload
+  {
+    public int WarehouseId { get; set; }
+    public string WarehouseName { get; set; } = string.Empty;
+  }
 }
