@@ -7,6 +7,7 @@ using System.Linq;
 using EnterpriseGradeInventoryAPI.DTO.Output;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace EnterpriseGradeInventoryAPI.GraphQL.Queries
 {
@@ -77,5 +78,31 @@ namespace EnterpriseGradeInventoryAPI.GraphQL.Queries
               ContactEmail = warehouse.ContactEmail
           };
       }
+    
+    public async Task<DeletedWarehousePayload> DeleteWarehouse(
+        [Service] ApplicationDbContext context,
+        [Service] AuditLogService auditService,
+        ClaimsPrincipal user,
+        int id
+    )
+        {
+        if (user == null)
+          throw new GraphQLException(new Error("User must be authenticated", "UNAUTHORIZED"));
+        int userId = int.Parse(user.FindFirst(ClaimTypes.NameIdentifier)?.Value 
+          ?? throw new GraphQLException(new Error("User ID not found in token", "INVALID_TOKEN")));
+    
+            var warehouse = await context.Warehouses.FindAsync(id);
+            if (warehouse == null)
+                throw new GraphQLException(new Error("Warehouse not found", "WAREHOUSE_NOT_FOUND"));
+            context.Warehouses.Remove(warehouse);
+
+            await auditService.CreateAuditLog("Delete", userId, "Warehouse", id, null, null, warehouse.WarehouseName);
+            await context.SaveChangesAsync();
+            return new DeletedWarehousePayload
+            {
+                WarehouseId = warehouse.Id,
+                WarehouseName = warehouse.WarehouseName
+            };
+        }
   }
 }
